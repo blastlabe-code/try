@@ -1,0 +1,889 @@
+<title>Stock Angler</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Figtree:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  /* Stock Angler commits to one look: a lake at dusk. Single theme by design. */
+  :root {
+    color-scheme: dark;
+    --lake-deep: #0b1f2a;
+    --lake: #12394a;
+    --lake-soft: #1a4a5c;
+    --ink: #081820;
+    --foam: #e8f1ef;
+    --reed: #8fb3aa;
+    --reed-dim: #5f8580;
+    --lantern: #f2b544;
+    --lantern-deep: #d9952a;
+    --bobber: #e0513a;
+    --line: rgba(232, 241, 239, 0.12);
+    --line-strong: rgba(232, 241, 239, 0.22);
+    --r-common: #a9c1b9;
+    --r-uncommon: #5fc2a6;
+    --r-rare: #62aee8;
+    --r-epic: #b884f0;
+    --r-legend: #f2b544;
+    --r-junk: #7d8f8a;
+    --display: "Alfa Slab One", "Rockwell", "Roboto Slab", Georgia, serif;
+    --body: "Figtree", "Segoe UI", system-ui, -apple-system, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+    --gutter: clamp(16px, 4vw, 40px);
+    --max: 1160px;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--lake-deep);
+    color: var(--foam);
+    font: 400 16px/1.6 var(--body);
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: inherit; }
+  h1, h2, h3 { font-family: var(--display); font-weight: 400; line-height: 1.05; text-wrap: balance; margin: 0; letter-spacing: 0.005em; }
+  p { margin: 0; }
+  .wrap { max-width: var(--max); margin-inline: auto; padding-inline: var(--gutter); }
+  .eyebrow { font: 500 12px/1 var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--lantern); }
+  .muted { color: var(--reed); }
+  .num { font-variant-numeric: tabular-nums; }
+  :focus-visible { outline: 2px solid var(--lantern); outline-offset: 3px; border-radius: 4px; }
+
+  /* ---------- nav ---------- */
+  .nav {
+    position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20;
+    background: rgba(11, 31, 42, 0.86); backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+  }
+  .nav .wrap { display: flex; align-items: center; gap: 24px; height: 60px; }
+  .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; font-family: var(--display); font-size: 20px; }
+  .brand svg { flex: none; }
+  .nav-links { display: flex; gap: 22px; margin-left: auto; font-weight: 500; font-size: 15px; }
+  .nav-links a { text-decoration: none; color: var(--reed); }
+  .nav-links a:hover { color: var(--foam); }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    font: 700 15px/1 var(--body); text-decoration: none; cursor: pointer;
+    border-radius: 999px; padding: 13px 22px; border: 1px solid transparent;
+    transition: transform .15s ease, background .15s ease, border-color .15s ease;
+  }
+  .btn:active { transform: translateY(1px); }
+  .btn-primary { background: var(--lantern); color: var(--ink); }
+  .btn-primary:hover { background: #f7c665; }
+  .btn-ghost { border-color: var(--line-strong); color: var(--foam); background: transparent; }
+  .btn-ghost:hover { border-color: var(--foam); }
+  .btn-sm { padding: 9px 16px; font-size: 14px; }
+  .btn[disabled] { opacity: .55; cursor: progress; }
+
+  /* ---------- hero ---------- */
+  .hero { position: relative; overflow: hidden; border-bottom: 1px solid var(--line); }
+  #lake { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .hero::after { /* legibility scrim on the text side */
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(90deg, rgba(8, 24, 32, 0.82) 0%, rgba(8, 24, 32, 0.55) 42%, rgba(8, 24, 32, 0) 70%);
+  }
+  .hero-grid {
+    position: relative; z-index: 2;
+    display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr); gap: 40px; align-items: end;
+    padding-block: 96px 64px; min-height: 600px;
+  }
+  .hero h1 { font-size: clamp(44px, 7vw, 88px); max-width: 11ch; }
+  .hero h1 em { font-style: normal; color: var(--lantern); }
+  .hero .lede { margin-top: 20px; font-size: clamp(17px, 1.6vw, 19px); max-width: 52ch; color: #d3e2de; }
+  .hero-ctas { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+  .facts { display: flex; flex-wrap: wrap; gap: 8px 22px; margin-top: 30px; font: 500 13px/1.4 var(--mono); color: var(--reed); }
+  .facts b { color: var(--foam); font-weight: 500; }
+
+  /* demo cast panel */
+  .demo {
+    background: rgba(8, 24, 32, 0.78); border: 1px solid var(--line-strong); border-radius: 18px;
+    padding: 20px; backdrop-filter: blur(6px); display: grid; gap: 14px;
+  }
+  .demo-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+  .demo-head h2 { font-size: 22px; }
+  .chip-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .rod-chip {
+    font: 600 13px/1 var(--body); padding: 9px 12px; border-radius: 999px; cursor: pointer;
+    background: transparent; color: var(--reed); border: 1px solid var(--line-strong);
+  }
+  .rod-chip[aria-pressed="true"] { color: var(--ink); background: var(--foam); border-color: var(--foam); }
+  .demo-status { font: 500 13px/1.4 var(--mono); color: var(--reed); min-height: 1.4em; }
+  .reveal {
+    display: grid; grid-template-columns: 64px 1fr; gap: 14px; align-items: center;
+    border-radius: 14px; padding: 14px; background: rgba(232, 241, 239, 0.05); border: 1px solid var(--line);
+    min-height: 92px;
+  }
+  .reveal .art { width: 64px; height: 64px; display: grid; place-items: center; border-radius: 12px; background: rgba(8, 24, 32, 0.7); }
+  .reveal .rarity { font: 500 11px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; }
+  .reveal .name { font-family: var(--display); font-size: 20px; line-height: 1.15; margin-top: 4px; }
+  .reveal .pay { font: 500 13px/1.45 var(--mono); color: #d3e2de; margin-top: 4px; }
+  .reveal.pop { animation: pop .45s cubic-bezier(.2, .9, .3, 1.3); }
+  @keyframes pop { from { transform: scale(.94); opacity: .3; } to { transform: scale(1); opacity: 1; } }
+  .demo-meta { display: flex; justify-content: space-between; gap: 12px; font: 400 12px/1.4 var(--mono); color: var(--reed-dim); }
+
+  /* ---------- catch tape ---------- */
+  .tape { background: var(--ink); border-bottom: 1px solid var(--line); overflow: hidden; }
+  .tape-inner { display: flex; align-items: center; gap: 14px; height: 44px; }
+  .tape-label { flex: none; font: 500 11px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--ink); background: var(--lantern); padding: 6px 8px; border-radius: 4px; }
+  .tape-track { flex: 1; overflow: hidden; mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent); }
+  .tape-run { display: inline-flex; gap: 36px; white-space: nowrap; font: 400 13px/44px var(--mono); color: var(--reed); animation: run 60s linear infinite; }
+  .tape-run span b { font-weight: 500; }
+  @keyframes run { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+  /* ---------- sections ---------- */
+  section.block { padding-block: 88px; border-bottom: 1px solid var(--line); }
+  .block-head { display: grid; gap: 12px; max-width: 62ch; margin-bottom: 44px; }
+  .block-head h2 { font-size: clamp(32px, 4.4vw, 52px); }
+  .block-head p { color: var(--reed); font-size: 17px; }
+
+  /* steps: a real sequence, so numbered */
+  .steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; border-top: 1px solid var(--line-strong); }
+  .step { padding: 26px 26px 0 0; display: grid; gap: 10px; align-content: start; }
+  .step + .step { padding-left: 26px; border-left: 1px solid var(--line); }
+  .step .n { font: 500 13px/1 var(--mono); color: var(--lantern); }
+  .step h3 { font-size: 26px; }
+  .step p { color: var(--reed); }
+
+  /* rods */
+  .rods { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+  .rod-card { border: 1px solid var(--line-strong); border-radius: 16px; overflow: hidden; display: grid; grid-template-rows: auto 1fr; background: rgba(18, 57, 74, 0.35); }
+  .rod-card.feature { border-color: rgba(242, 181, 68, 0.55); }
+  .rod-top { padding: 22px 22px 18px; display: grid; gap: 6px; border-bottom: 1px dashed var(--line-strong); position: relative; }
+  .rod-top .tier { font: 500 11px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--reed); }
+  .rod-top h3 { font-size: 28px; }
+  .rod-top .price { font: 500 15px/1.3 var(--mono); color: var(--lantern); }
+  .rod-top svg { position: absolute; right: 18px; top: 18px; }
+  .specs { margin: 0; padding: 18px 22px 22px; display: grid; gap: 10px; }
+  .specs div { display: flex; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--line); padding-bottom: 9px; }
+  .specs div:last-child { border-bottom: 0; padding-bottom: 0; }
+  .specs dt { color: var(--reed); }
+  .specs dd { margin: 0; font: 500 15px/1.5 var(--mono); font-variant-numeric: tabular-nums; }
+  .note { margin-top: 18px; font-size: 14px; color: var(--reed-dim); max-width: 80ch; }
+
+  /* catch table */
+  .table-scroll { overflow-x: auto; border: 1px solid var(--line-strong); border-radius: 16px; }
+  table.catch { width: 100%; border-collapse: collapse; min-width: 760px; }
+  .catch th, .catch td { text-align: left; padding: 14px 16px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .catch thead th { font: 500 11px/1.2 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--reed); background: rgba(8, 24, 32, 0.6); }
+  .catch tbody tr:last-child td { border-bottom: 0; }
+  .catch td.p { font: 500 14px/1.5 var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .rar { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; }
+  .rar i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .species { color: var(--reed); font-size: 14px; margin-top: 2px; }
+  .tick { font: 500 12px/1 var(--mono); padding: 3px 6px; border-radius: 4px; background: rgba(232, 241, 239, 0.08); color: var(--foam); margin-right: 4px; display: inline-block; margin-top: 4px; }
+
+  /* economy */
+  .split { display: flex; height: 64px; border-radius: 12px; overflow: hidden; border: 1px solid var(--line-strong); }
+  .split > div { display: flex; align-items: flex-end; padding: 8px 10px; font: 500 13px/1.1 var(--mono); color: var(--ink); min-width: 0; }
+  .split-legend { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px; margin-top: 18px; }
+  .split-legend div { display: grid; gap: 4px; align-content: start; }
+  .split-legend b { font-family: var(--display); font-weight: 400; font-size: 20px; }
+  .split-legend span { color: var(--reed); font-size: 14px; }
+  .sw { width: 12px; height: 12px; border-radius: 3px; display: inline-block; margin-right: 8px; vertical-align: -1px; }
+  .econ-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 40px; margin-top: 56px; }
+  .econ-grid h3 { font-size: 26px; margin-bottom: 12px; }
+  .econ-grid p { color: var(--reed); }
+  .econ-grid p + p { margin-top: 12px; }
+  .formula { margin-top: 16px; font: 500 15px/1.6 var(--mono); background: var(--ink); border: 1px solid var(--line-strong); border-radius: 12px; padding: 16px 18px; color: var(--foam); overflow-x: auto; }
+  .formula .c { color: var(--reed-dim); }
+  .rtp { display: grid; gap: 10px; margin-top: 16px; }
+  .rtp-row { display: grid; grid-template-columns: 150px 1fr 56px; gap: 12px; align-items: center; font-size: 14px; }
+  .rtp-bar { height: 10px; border-radius: 6px; background: rgba(232, 241, 239, 0.08); overflow: hidden; }
+  .rtp-bar i { display: block; height: 100%; border-radius: 6px; }
+  .rtp-row .v { font: 500 14px/1 var(--mono); text-align: right; font-variant-numeric: tabular-nums; }
+
+  /* tournament */
+  .tour { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 40px; align-items: start; }
+  .points { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin-top: 20px; }
+  .points div { border: 1px solid var(--line); border-radius: 10px; padding: 12px; display: grid; gap: 2px; }
+  .points b { font: 500 22px/1.1 var(--mono); }
+  .points span { font-size: 12px; color: var(--reed); }
+  .board { border: 1px solid var(--line-strong); border-radius: 16px; overflow: hidden; }
+  .board-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 18px; background: rgba(8, 24, 32, 0.6); border-bottom: 1px solid var(--line); }
+  .board-head .clock { font: 500 13px/1 var(--mono); color: var(--lantern); }
+  .board ol { list-style: none; margin: 0; padding: 0; }
+  .board li { display: grid; grid-template-columns: 34px 1fr auto auto; gap: 14px; align-items: center; padding: 12px 18px; border-bottom: 1px solid var(--line); font-size: 15px; }
+  .board li:last-child { border-bottom: 0; }
+  .board .rk { font: 500 14px/1 var(--mono); color: var(--reed); }
+  .board .addr { font: 400 14px/1 var(--mono); }
+  .board .sc { font: 500 14px/1 var(--mono); font-variant-numeric: tabular-nums; }
+  .board .pz { font: 400 13px/1 var(--mono); color: var(--lantern); min-width: 64px; text-align: right; }
+  .tag-sample { font: 500 10px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--reed); border: 1px solid var(--line-strong); padding: 4px 6px; border-radius: 4px; }
+
+  /* trust */
+  .trust { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px 40px; }
+  .trust div { display: grid; gap: 8px; align-content: start; padding-top: 18px; border-top: 1px solid var(--line-strong); }
+  .trust h3 { font-family: var(--body); font-weight: 700; font-size: 18px; line-height: 1.3; }
+  .trust p { color: var(--reed); font-size: 15px; }
+
+  /* faq */
+  .faq { display: grid; gap: 0; max-width: 820px; border-top: 1px solid var(--line-strong); }
+  .faq details { border-bottom: 1px solid var(--line); }
+  .faq summary { cursor: pointer; list-style: none; padding: 18px 36px 18px 0; font-weight: 600; font-size: 18px; position: relative; }
+  .faq summary::-webkit-details-marker { display: none; }
+  .faq summary::after { content: "+"; position: absolute; right: 4px; top: 14px; font: 400 24px/1 var(--mono); color: var(--lantern); }
+  .faq details[open] summary::after { content: "\2212"; }
+  .faq details p { padding: 0 0 20px; color: var(--reed); max-width: 68ch; }
+
+  /* cta + footer */
+  .cta { padding-block: 88px; text-align: left; }
+  .cta .wrap { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 28px; }
+  .cta h2 { font-size: clamp(34px, 5vw, 60px); max-width: 14ch; }
+  footer { background: var(--ink); padding-block: 44px; border-top: 1px solid var(--line); }
+  footer .wrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 32px; }
+  footer p { font-size: 13px; color: var(--reed-dim); max-width: 78ch; }
+  footer p + p { margin-top: 10px; }
+  .foot-links { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 12px; font-size: 14px; }
+  .foot-links a { color: var(--reed); text-decoration: none; }
+
+  @media (max-width: 920px) {
+    .hero-grid { grid-template-columns: 1fr; padding-block: 72px 40px; min-height: 0; }
+    .hero::after { background: linear-gradient(180deg, rgba(8, 24, 32, 0.35) 0%, rgba(8, 24, 32, 0.75) 60%, rgba(8, 24, 32, 0.9) 100%); }
+    .nav-links { display: none; }
+    .nav .wrap { justify-content: space-between; }
+    .steps, .rods, .trust { grid-template-columns: 1fr; }
+    .step, .step + .step { padding: 22px 0; border-left: 0; }
+    .step + .step { border-top: 1px solid var(--line); }
+    .econ-grid, .tour, footer .wrap { grid-template-columns: 1fr; }
+    .split-legend { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .points { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    section.block { padding-block: 64px; }
+  }
+  @media (max-width: 480px) {
+    .split > div span.lbl { display: none; }
+    .rtp-row { grid-template-columns: 110px 1fr 48px; }
+    .board li { grid-template-columns: 26px 1fr auto; }
+    .board .pz { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    .tape-run { animation: none; }
+    .reveal.pop { animation: none; }
+  }
+</style>
+
+<nav class="nav" aria-label="Main">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="Stock Angler home">
+      <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <line x1="13" y1="1" x2="13" y2="6" stroke="#e8f1ef" stroke-width="1.6" stroke-linecap="round"/>
+        <path d="M5 13 a8 8 0 0 1 16 0 z" fill="#e0513a"/>
+        <path d="M5 13 a8 8 0 0 0 16 0 z" fill="#e8f1ef"/>
+        <rect x="5" y="12.2" width="16" height="1.6" fill="#081820"/>
+      </svg>
+      Stock Angler
+    </a>
+    <div class="nav-links">
+      <a href="#how">How it works</a>
+      <a href="#rods">Rods</a>
+      <a href="#catches">Catches</a>
+      <a href="#economy">Economy</a>
+      <a href="#tournament">Leaderboard</a>
+      <a href="#faq">FAQ</a>
+    </div>
+    <a class="btn btn-primary btn-sm" href="#try">Play now</a>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <canvas id="lake" aria-hidden="true"></canvas>
+  <div class="wrap hero-grid">
+    <div>
+      <p class="eyebrow">A fishing game on Robinhood Chain</p>
+      <h1 style="margin-top:14px">Cast for <em>real stocks.</em></h1>
+      <p class="lede">Buy a rod with $GAME, cast it, and reel in whatever bites: old boots, fish paid in $GAME, or stock fish paid in tokenized NVDA, AAPL, TSLA and more.</p>
+      <div class="hero-ctas">
+        <a class="btn btn-primary" href="#try">Try a free cast</a>
+        <a class="btn btn-ghost" href="#economy">How the pond is stocked</a>
+      </div>
+      <div class="facts">
+        <span><b>3</b> rods</span>
+        <span><b>14</b> species</span>
+        <span>catches drawn by <b>Chainlink VRF</b></span>
+        <span><b>65%</b> minimum back to players</span>
+      </div>
+    </div>
+
+    <div class="demo" id="try" aria-live="polite">
+      <div class="demo-head">
+        <h2>Free practice cast</h2>
+        <span class="tag-sample">Preview</span>
+      </div>
+      <div class="chip-row" role="group" aria-label="Choose a rod">
+        <button class="rod-chip" id="chip-0" data-rod="0" aria-pressed="true">Bamboo 1x</button>
+        <button class="rod-chip" id="chip-1" data-rod="1" aria-pressed="false">Carbon 2.5x</button>
+        <button class="rod-chip" id="chip-2" data-rod="2" aria-pressed="false">Golden 5x</button>
+      </div>
+      <button class="btn btn-primary" id="castBtn">Cast the line</button>
+      <p class="demo-status" id="status">Pick a rod and cast. Same odds as the real game.</p>
+      <div class="reveal" id="reveal">
+        <div class="art" id="revealArt"></div>
+        <div>
+          <p class="rarity" id="revealRarity" style="color:var(--reed)">Last catch</p>
+          <p class="name" id="revealName">Nothing yet</p>
+          <p class="pay" id="revealPay">Stock fish pay a slice of that stock's prize pool.</p>
+        </div>
+      </div>
+      <div class="demo-meta">
+        <span id="pity">Junk streak 0 / 5</span>
+        <span>Example pools and prices</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="tape" aria-label="Recent catches">
+  <div class="wrap tape-inner">
+    <span class="tape-label">Catch tape</span>
+    <div class="tape-track"><div class="tape-run" id="tapeRun"></div></div>
+  </div>
+</div>
+
+<main>
+  <section class="block" id="how">
+    <div class="wrap">
+      <div class="block-head">
+        <p class="eyebrow">How it works</p>
+        <h2>Three steps from the dock to your wallet.</h2>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <span class="n">Step 1</span>
+          <h3>Buy a rod</h3>
+          <p>Pay in $GAME, the game token launched on pons.family. Your rod is an NFT with a durability counter, so you can keep it, sell it, or repair it later.</p>
+        </div>
+        <div class="step">
+          <span class="n">Step 2</span>
+          <h3>Cast</h3>
+          <p>Each cast uses one point of durability and starts a cooldown on that rod. Chainlink VRF supplies the randomness, so nobody can pick the catch, including us.</p>
+        </div>
+        <div class="step">
+          <span class="n">Step 3</span>
+          <h3>Reel in and claim</h3>
+          <p>Fish pay $GAME and stock fish pay stock tokens straight into your rewards. Claim whenever you like. Claims keep working even if the game is paused.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="rods">
+    <div class="wrap">
+      <div class="block-head">
+        <p class="eyebrow">Tackle shop</p>
+        <h2>Pick your rod.</h2>
+        <p>Better rods catch more often, pay bigger multiples and cool down faster. Prices are set so every rod returns about the same value per $GAME, with a small bonus for going pro.</p>
+      </div>
+      <div class="rods">
+        <article class="rod-card">
+          <div class="rod-top">
+            <span class="tier">Beginner</span>
+            <h3>Bamboo Rod</h3>
+            <span class="price num">100,000 $GAME</span>
+            <svg width="56" height="56" viewBox="0 0 56 56" aria-hidden="true"><line x1="8" y1="50" x2="48" y2="6" stroke="#c9a66b" stroke-width="3" stroke-linecap="round"/><circle cx="14" cy="43" r="4" fill="none" stroke="#8fb3aa" stroke-width="2"/><path d="M48 6 Q52 26 44 40" fill="none" stroke="#8fb3aa" stroke-width="1"/></svg>
+          </div>
+          <dl class="specs">
+            <div><dt>Durability</dt><dd>30 casts</dd></div>
+            <div><dt>Catch chance</dt><dd>45%</dd></div>
+            <div><dt>Reward multiplier</dt><dd>1.0x</dd></div>
+            <div><dt>Cooldown</dt><dd>5 min</dd></div>
+            <div><dt>Value per $GAME</dt><dd>0.95</dd></div>
+          </dl>
+        </article>
+        <article class="rod-card">
+          <div class="rod-top">
+            <span class="tier">Pro</span>
+            <h3>Carbon Rod</h3>
+            <span class="price num">400,000 $GAME</span>
+            <svg width="56" height="56" viewBox="0 0 56 56" aria-hidden="true"><line x1="8" y1="50" x2="48" y2="6" stroke="#5f8580" stroke-width="3" stroke-linecap="round"/><line x1="8" y1="50" x2="20" y2="37" stroke="#e8f1ef" stroke-width="4" stroke-linecap="round"/><circle cx="16" cy="41" r="4" fill="none" stroke="#e8f1ef" stroke-width="2"/><path d="M48 6 Q52 26 44 40" fill="none" stroke="#8fb3aa" stroke-width="1"/></svg>
+          </div>
+          <dl class="specs">
+            <div><dt>Durability</dt><dd>40 casts</dd></div>
+            <div><dt>Catch chance</dt><dd>55%</dd></div>
+            <div><dt>Reward multiplier</dt><dd>2.5x</dd></div>
+            <div><dt>Cooldown</dt><dd>4 min</dd></div>
+            <div><dt>Value per $GAME</dt><dd>1.00</dd></div>
+          </dl>
+        </article>
+        <article class="rod-card feature">
+          <div class="rod-top">
+            <span class="tier">Master</span>
+            <h3>Golden Rod</h3>
+            <span class="price num">1,100,000 $GAME</span>
+            <svg width="56" height="56" viewBox="0 0 56 56" aria-hidden="true"><line x1="8" y1="50" x2="48" y2="6" stroke="#f2b544" stroke-width="3" stroke-linecap="round"/><line x1="8" y1="50" x2="20" y2="37" stroke="#d9952a" stroke-width="4.5" stroke-linecap="round"/><circle cx="16" cy="41" r="4.5" fill="#f2b544"/><path d="M48 6 Q52 26 44 40" fill="none" stroke="#f2b544" stroke-width="1"/></svg>
+          </div>
+          <dl class="specs">
+            <div><dt>Durability</dt><dd>50 casts</dd></div>
+            <div><dt>Catch chance</dt><dd>65%</dd></div>
+            <div><dt>Reward multiplier</dt><dd>5.0x</dd></div>
+            <div><dt>Cooldown</dt><dd>3 min</dd></div>
+            <div><dt>Value per $GAME</dt><dd>1.05</dd></div>
+          </dl>
+        </article>
+      </div>
+      <p class="note">Worn-out rods can be repaired twice. Each repair costs 75% of the rod's price per missing cast and trims 20% off its maximum durability. Launch values; the final numbers come from the economy simulator.</p>
+    </div>
+  </section>
+
+  <section class="block" id="catches">
+    <div class="wrap">
+      <div class="block-head">
+        <p class="eyebrow">What's biting</p>
+        <h2>Boots, bass and blue chips.</h2>
+        <p>Every cast either misses and brings up junk, or catches a fish. Chances below are per cast. Prizes are a share of the live pool, multiplied by your rod, and capped at 5% of a pool per catch.</p>
+      </div>
+      <div class="table-scroll">
+        <table class="catch">
+          <thead>
+            <tr><th>Catch</th><th>Pays</th><th>Bamboo</th><th>Carbon</th><th>Golden</th></tr>
+          </thead>
+          <tbody id="catchBody"></tbody>
+        </table>
+      </div>
+      <p class="note">Five junk catches in a row and the next cast is guaranteed to catch a fish. Six pieces of junk craft one bait, which adds 10 points of catch chance to a single cast.</p>
+    </div>
+  </section>
+
+  <section class="block" id="economy">
+    <div class="wrap">
+      <div class="block-head">
+        <p class="eyebrow">Economy</p>
+        <h2>Where your $GAME goes.</h2>
+        <p>Every rod purchase and repair is split the moment you pay. The contracts enforce the ranges, so the split can be tuned but never turned against players.</p>
+      </div>
+      <div class="split" role="img" aria-label="Revenue split: 30% stock pool, 35% $GAME prize pool, 15% burned, 10% tournament, 10% treasury">
+        <div style="flex:30;background:var(--r-rare)"><span class="lbl">30%</span></div>
+        <div style="flex:35;background:var(--r-uncommon)"><span class="lbl">35%</span></div>
+        <div style="flex:15;background:var(--bobber)"><span class="lbl">15%</span></div>
+        <div style="flex:10;background:var(--lantern)"><span class="lbl">10%</span></div>
+        <div style="flex:10;background:var(--reed-dim)"><span class="lbl">10%</span></div>
+      </div>
+      <div class="split-legend">
+        <div><b><i class="sw" style="background:var(--r-rare)"></i>30%</b><span>Swapped into stock tokens on Uniswap and dropped into the stock pools.</span></div>
+        <div><b><i class="sw" style="background:var(--r-uncommon)"></i>35%</b><span>Goes straight into the $GAME prize pool that pays for fish.</span></div>
+        <div><b><i class="sw" style="background:var(--bobber)"></i>15%</b><span>Burned for good. $GAME has a fixed supply, so every rod shrinks it.</span></div>
+        <div><b><i class="sw" style="background:var(--lantern)"></i>10%</b><span>Funds the weekly tournament prize for the top 10 anglers.</span></div>
+        <div><b><i class="sw" style="background:var(--reed-dim)"></i>10%</b><span>Treasury for audits, VRF fees, keepers and seeding new pools.</span></div>
+      </div>
+
+      <div class="econ-grid">
+        <div>
+          <h3>Why the pond never runs dry</h3>
+          <p>No prize is a fixed amount. Each one is a small slice of what the pool holds at that moment, so the game can never owe more than it has.</p>
+          <div class="formula">prize = pool × share × rod multiplier<br><span class="c">// capped at 5% of the pool per catch</span></div>
+          <p style="margin-top:16px">When many people play, pools fill faster than they pay out and prizes grow. When play slows, pools shrink slowly and never hit zero. Stock splits and price moves don't matter either, because prizes are counted in tokens.</p>
+        </div>
+        <div>
+          <h3>What comes back to players</h3>
+          <p>Over time the pools pay out what flows in. That makes the long-run return easy to state: the share of spending routed to prize pools.</p>
+          <div class="rtp">
+            <div class="rtp-row"><span>Stock fish</span><span class="rtp-bar"><i style="width:40%;background:var(--r-rare)"></i></span><span class="v">30%</span></div>
+            <div class="rtp-row"><span>$GAME fish</span><span class="rtp-bar"><i style="width:46.67%;background:var(--r-uncommon)"></i></span><span class="v">35%</span></div>
+            <div class="rtp-row"><span>Tournament</span><span class="rtp-bar"><i style="width:13.33%;background:var(--lantern)"></i></span><span class="v">10%</span></div>
+            <div class="rtp-row"><strong>Total to players</strong><span class="rtp-bar"><i style="width:100%;background:var(--foam)"></i></span><span class="v"><strong>75%</strong></span></div>
+          </div>
+          <p style="margin-top:16px">The contracts refuse any split that sends less than 65% back to players. Trading fees that $GAME earns on pons.family can also buy stocks for the pond, so trading volume stocks the lake even on quiet days.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="tournament">
+    <div class="wrap tour">
+      <div>
+        <div class="block-head" style="margin-bottom:0">
+          <p class="eyebrow">Weekly tournament</p>
+          <h2>Top ten anglers split the prize.</h2>
+          <p>Every catch scores points times your rod multiplier. The leaderboard lives on-chain, a new season starts every seven days, and anyone can close a finished season so the winners can claim.</p>
+        </div>
+        <div class="points">
+          <div><b>1</b><span>Common</span></div>
+          <div><b>3</b><span>Uncommon</span></div>
+          <div><b>10</b><span>Rare</span></div>
+          <div><b>30</b><span>Epic</span></div>
+          <div><b>150</b><span>Legendary</span></div>
+        </div>
+        <p class="note">Prize by rank: 30%, 20%, 13%, 10%, 8%, 6%, 5%, 4%, 2%, 2%. Unclaimed ranks roll into next week.</p>
+      </div>
+      <div class="board">
+        <div class="board-head">
+          <strong>Season 1</strong>
+          <span class="tag-sample">Sample standings</span>
+          <span class="clock num" id="clock">6d 23h 59m</span>
+        </div>
+        <ol id="boardList"></ol>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="trust">
+    <div class="wrap">
+      <div class="block-head">
+        <p class="eyebrow">Fair by design</p>
+        <h2>Rules you can read on-chain.</h2>
+      </div>
+      <div class="trust">
+        <div><h3>Verifiable randomness</h3><p>Every catch comes from a Chainlink VRF proof. Robinhood Chain has no safe built-in randomness, so the game never uses block data.</p></div>
+        <div><h3>Your winnings are yours</h3><p>Prizes are credited to you inside the prize vault. The admin has no function that can move credited funds.</p></div>
+        <div><h3>Seven-day warning</h3><p>Pool funds that are not yet won can only leave after a public seven-day delay, so players always see it coming.</p></div>
+        <div><h3>No spam casting</h3><p>Every rod has a cooldown and a fixed number of casts. Cooldowns stay with the rod when it is traded.</p></div>
+        <div><h3>Price change limits</h3><p>Rod prices can move at most 25% per day, and every purchase has a maximum price, so a price change can't catch you mid-purchase.</p></div>
+        <div><h3>Open source</h3><p>Contracts, tests and the economy simulator are public. Run the simulator yourself to check the numbers on this page.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="faq">
+    <div class="wrap">
+      <div class="block-head">
+        <p class="eyebrow">FAQ</p>
+        <h2>Before you cast.</h2>
+      </div>
+      <div class="faq">
+        <details><summary>Where do I get $GAME?</summary><p>$GAME launches on pons.family, the token launchpad on Robinhood Chain. Buy it there or on Uniswap once it trades, then connect the same wallet here.</p></details>
+        <details><summary>Which wallet and network do I need?</summary><p>Any EVM wallet that can add a custom network. Robinhood Chain uses chain ID 4663, and gas is paid in ETH. The app adds the network for you.</p></details>
+        <details><summary>Are stock tokens the same as owning shares?</summary><p>No. Robinhood Stock Tokens are tokenized debt instruments that track a stock's value. They give economic exposure but no shareholder rights, and they are not offered to US persons or in several other jurisdictions.</p></details>
+        <details><summary>What happens when my rod breaks?</summary><p>At zero durability the rod stops casting. You can repair it twice. Each repair costs 75% of the rod's price per missing cast and lowers its maximum durability by 20%. Or keep it as a trophy.</p></details>
+        <details><summary>Can I lose money?</summary><p>Yes. This is a game of chance, and the average return is below what you spend. Only play with money you are comfortable losing, and check that games like this are legal where you live.</p></details>
+        <details><summary>Who can change the rules?</summary><p>Settings sit behind a multisig with a timelock, and hard limits are built into the contracts. Changes emit public events, and the app shows the current values on the Rules page.</p></details>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta">
+    <div class="wrap">
+      <h2>The lake opens when $GAME launches.</h2>
+      <div class="hero-ctas" style="margin-top:0">
+        <a class="btn btn-primary" href="#try">Practice cast</a>
+        <a class="btn btn-ghost" href="#faq">Read the FAQ</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div>
+      <a class="brand" href="#top">Stock Angler</a>
+      <div class="foot-links">
+        <a href="#how">How it works</a><a href="#rods">Rods</a><a href="#catches">Catches</a><a href="#economy">Economy</a><a href="#tournament">Leaderboard</a><a href="#faq">FAQ</a>
+      </div>
+    </div>
+    <div>
+      <p>Stock Angler is an independent project running on Robinhood Chain. It is not affiliated with, endorsed by, or sponsored by Robinhood Markets, Inc. or its affiliates.</p>
+      <p>Stock Tokens are not offered to US persons and are restricted in other jurisdictions. Games of chance with paid entry may be regulated or prohibited where you live. You are responsible for following your local laws. Nothing here is financial advice.</p>
+      <p>Preview page: pools, prices, catches and standings shown here are examples.</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function () {
+  "use strict";
+  var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // ---------- game data (launch defaults from docs/SPEC.md) ----------
+  var RODS = [
+    { name: "Bamboo", catchBps: 4500, mult: 100, casts: 30 },
+    { name: "Carbon", catchBps: 5500, mult: 250, casts: 40 },
+    { name: "Golden", catchBps: 6500, mult: 500, casts: 50 }
+  ];
+  var RARITIES = [
+    { key: "Common", weight: 6200, color: "var(--r-common)", share: 150 },
+    { key: "Uncommon", weight: 2500, color: "var(--r-uncommon)", share: 600 },
+    { key: "Rare", weight: 1000, color: "var(--r-rare)", share: 4000 },
+    { key: "Epic", weight: 280, color: "var(--r-epic)", share: 12000 },
+    { key: "Legendary", weight: 20, color: "var(--r-legend)", share: 10000 }
+  ];
+  var SPECIES = [
+    { name: "Minnow", r: 0, t: "GAME" }, { name: "Sardine", r: 0, t: "GAME" }, { name: "Perch", r: 0, t: "GAME" },
+    { name: "Bass", r: 1, t: "GAME" }, { name: "Trout", r: 1, t: "GAME" }, { name: "Catfish", r: 1, t: "GAME" },
+    { name: "Apple Snapper", r: 2, t: "AAPL" }, { name: "Microsoft Marlin", r: 2, t: "MSFT" },
+    { name: "Amazon Amberjack", r: 2, t: "AMZN" }, { name: "Google Grouper", r: 2, t: "GOOGL" },
+    { name: "Meta Mackerel", r: 2, t: "META" },
+    { name: "Nvidia Neon Shark", r: 3, t: "NVDA" }, { name: "Tesla Thunder Eel", r: 3, t: "TSLA" },
+    { name: "Golden Bull", r: 4, t: "*" }
+  ];
+  var JUNK = ["Worn Boot", "Tin Can", "Seaweed", "Old Tire", "Message in a Bottle"];
+  // Example pools and prices for the preview only.
+  var POOLS = { GAME: 12000000, AAPL: 2.5, MSFT: 1.2, AMZN: 2.6, GOOGL: 3.0, META: 0.8, NVDA: 4.0, TSLA: 1.8 };
+  var PRICE = { GAME: 0.0001, AAPL: 230, MSFT: 450, AMZN: 210, GOOGL: 180, META: 700, NVDA: 170, TSLA: 350 };
+  var MAX_SHARE = 50000;
+
+  // ---------- catch table ----------
+  function pct(x) { return x >= 0.1 ? x.toFixed(1) + "%" : x.toFixed(2) + "%"; }
+  var body = document.getElementById("catchBody");
+  var rows = [];
+  rows.push({ label: "Junk", color: "var(--r-junk)", list: JUNK.join(", "), pays: "Nothing, but +1 junk toward bait", odds: RODS.map(function (r) { return 100 - r.catchBps / 100; }) });
+  RARITIES.forEach(function (ra, i) {
+    var sp = SPECIES.filter(function (s) { return s.r === i; });
+    var pays;
+    if (i < 2) pays = (ra.share / 10000).toFixed(3).replace(/0+$/, "") + "% of the $GAME pool";
+    else if (i < 4) pays = (ra.share / 10000) + "% of that stock's pool";
+    else pays = "1% of every pool at once";
+    rows.push({
+      label: ra.key, color: ra.color, species: sp, pays: pays,
+      odds: RODS.map(function (r) { return (r.catchBps / 100) * (ra.weight / 10000); })
+    });
+  });
+  rows.forEach(function (row) {
+    var tr = document.createElement("tr");
+    var who = row.species
+      ? row.species.map(function (s) { return s.t === "GAME" || s.t === "*" ? s.name : s.name + " <span class=\"tick\">" + s.t + "</span>"; }).join(", ")
+      : row.list;
+    tr.innerHTML =
+      "<td><span class=\"rar\"><i style=\"background:" + row.color + "\"></i>" + row.label + "</span><div class=\"species\">" + who + "</div></td>" +
+      "<td>" + row.pays + "</td>" +
+      row.odds.map(function (o) { return "<td class=\"p\">" + pct(o) + "</td>"; }).join("");
+    body.appendChild(tr);
+  });
+
+  // ---------- sample leaderboard ----------
+  var board = [
+    ["0x7a3f…c21e", 1840], ["0x19bd…08aa", 1325], ["0xe44c…9f13", 960], ["0x03a1…77d0", 722], ["0xb8f2…4e65", 511]
+  ];
+  var prizeBps = [3000, 2000, 1300, 1000, 800];
+  var seasonPrize = 4200000;
+  var bl = document.getElementById("boardList");
+  board.forEach(function (b, i) {
+    var li = document.createElement("li");
+    li.innerHTML = "<span class=\"rk\">#" + (i + 1) + "</span><span class=\"addr\">" + b[0] + "</span><span class=\"sc\">" + b[1].toLocaleString("en-US") + " pts</span><span class=\"pz\">" + Math.round(seasonPrize * prizeBps[i] / 10000).toLocaleString("en-US") + "</span>";
+    bl.appendChild(li);
+  });
+  var end = Date.now() + 7 * 24 * 3600 * 1000 - 60000;
+  function tickClock() {
+    var s = Math.max(0, Math.floor((end - Date.now()) / 1000));
+    var d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60), sec = s % 60;
+    document.getElementById("clock").textContent = d + "d " + h + "h " + m + "m " + (sec < 10 ? "0" : "") + sec + "s";
+  }
+  tickClock(); setInterval(tickClock, 1000);
+
+  // ---------- catch tape ----------
+  var tape = [
+    "0x7a3f…c21e <b style=\"color:var(--r-epic)\">Nvidia Neon Shark</b> 0.24 NVDA · Golden 5x",
+    "0x19bd…08aa <b style=\"color:var(--r-junk)\">Worn Boot</b> +1 junk",
+    "0xe44c…9f13 <b style=\"color:var(--r-rare)\">Apple Snapper</b> 0.025 AAPL · Carbon 2.5x",
+    "0x03a1…77d0 <b style=\"color:var(--r-uncommon)\">Trout</b> 7,200 $GAME",
+    "0xb8f2…4e65 <b style=\"color:var(--r-common)\">Minnow</b> 1,800 $GAME",
+    "0x5c90…e3b2 <b style=\"color:var(--r-junk)\">Message in a Bottle</b> +1 junk",
+    "0x7a3f…c21e <b style=\"color:var(--r-rare)\">Meta Mackerel</b> 0.016 META · Golden 5x",
+    "0x2d4e…a901 <b style=\"color:var(--r-uncommon)\">Catfish</b> 18,000 $GAME · Carbon 2.5x"
+  ];
+  var run = document.getElementById("tapeRun");
+  function renderTape() {
+    var html = tape.map(function (t) { return "<span>" + t + "</span>"; }).join("");
+    run.innerHTML = html + html; // doubled for a seamless loop
+  }
+  renderTape();
+
+  // ---------- art ----------
+  function fishSVG(color, ticker) {
+    return "<svg width=\"52\" height=\"40\" viewBox=\"0 0 52 40\" aria-hidden=\"true\">" +
+      "<path d=\"M4 20 C12 6 32 4 42 20 C32 36 12 34 4 20 Z\" fill=\"" + color + "\"/>" +
+      "<path d=\"M40 20 L51 10 L49 20 L51 30 Z\" fill=\"" + color + "\" opacity=\"0.75\"/>" +
+      "<circle cx=\"13\" cy=\"17\" r=\"2.4\" fill=\"#081820\"/>" +
+      (ticker ? "<text x=\"24\" y=\"24\" text-anchor=\"middle\" font-family=\"IBM Plex Mono, monospace\" font-size=\"9\" font-weight=\"500\" fill=\"#081820\">" + ticker + "</text>" : "") +
+      "</svg>";
+  }
+  var JUNK_ART = [
+    "<svg width=\"48\" height=\"44\" viewBox=\"0 0 48 44\" aria-hidden=\"true\"><path d=\"M14 4 h12 v20 c8 1 16 4 16 11 v5 H6 V4 z\" fill=\"#6b5a45\"/><path d=\"M6 36 h36 v4 H6z\" fill=\"#3e342a\"/><path d=\"M16 10 h8 M16 15 h8 M16 20 h8\" stroke=\"#a8906c\" stroke-width=\"2\"/></svg>",
+    "<svg width=\"40\" height=\"48\" viewBox=\"0 0 40 48\" aria-hidden=\"true\"><rect x=\"8\" y=\"6\" width=\"24\" height=\"38\" rx=\"3\" fill=\"#8a9aa0\"/><rect x=\"8\" y=\"16\" width=\"24\" height=\"14\" fill=\"#b0473a\"/><ellipse cx=\"20\" cy=\"6\" rx=\"12\" ry=\"3\" fill=\"#c6d1d4\"/></svg>",
+    "<svg width=\"44\" height=\"48\" viewBox=\"0 0 44 48\" aria-hidden=\"true\"><path d=\"M22 46 C14 34 30 26 20 14 C16 9 18 5 22 2\" fill=\"none\" stroke=\"#4f8a5b\" stroke-width=\"5\" stroke-linecap=\"round\"/><path d=\"M22 46 C30 36 18 28 28 18\" fill=\"none\" stroke=\"#6fae78\" stroke-width=\"4\" stroke-linecap=\"round\"/></svg>",
+    "<svg width=\"48\" height=\"48\" viewBox=\"0 0 48 48\" aria-hidden=\"true\"><circle cx=\"24\" cy=\"24\" r=\"20\" fill=\"#2b2f31\"/><circle cx=\"24\" cy=\"24\" r=\"9\" fill=\"#0b1f2a\"/><circle cx=\"24\" cy=\"24\" r=\"15\" fill=\"none\" stroke=\"#474d50\" stroke-width=\"2\" stroke-dasharray=\"4 3\"/></svg>",
+    "<svg width=\"36\" height=\"50\" viewBox=\"0 0 36 50\" aria-hidden=\"true\"><rect x=\"14\" y=\"2\" width=\"8\" height=\"8\" rx=\"1\" fill=\"#9c7a4f\"/><path d=\"M12 10 h12 v6 c6 3 8 7 8 12 v16 a4 4 0 0 1-4 4 H8 a4 4 0 0 1-4-4 V28 c0-5 2-9 8-12 z\" fill=\"rgba(143,179,170,0.55)\"/><rect x=\"10\" y=\"26\" width=\"16\" height=\"12\" rx=\"1\" fill=\"#e8dcc0\" transform=\"rotate(-8 18 32)\"/></svg>"
+  ];
+  var GOLD_BULL = "<svg width=\"54\" height=\"44\" viewBox=\"0 0 54 44\" aria-hidden=\"true\"><path d=\"M6 8 C10 16 16 16 20 14 M48 8 C44 16 38 16 34 14\" stroke=\"#f2b544\" stroke-width=\"4\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M16 14 h22 c3 0 5 3 5 6 v6 c0 8-8 14-16 14 s-16-6-16-14 v-6 c0-3 2-6 5-6z\" fill=\"#f2b544\"/><circle cx=\"21\" cy=\"24\" r=\"2.2\" fill=\"#081820\"/><circle cx=\"33\" cy=\"24\" r=\"2.2\" fill=\"#081820\"/><ellipse cx=\"27\" cy=\"33\" rx=\"6\" ry=\"3.5\" fill=\"#d9952a\"/></svg>";
+
+  // ---------- demo cast ----------
+  var rodIdx = 0, streak = 0, busy = false;
+  var chips = Array.prototype.slice.call(document.querySelectorAll(".rod-chip"));
+  chips.forEach(function (c) {
+    c.addEventListener("click", function () {
+      rodIdx = Number(c.getAttribute("data-rod"));
+      chips.forEach(function (o) { o.setAttribute("aria-pressed", String(o === c)); });
+    });
+  });
+  function rand(n) { var a = new Uint32Array(1); crypto.getRandomValues(a); return a[0] % n; }
+  function fmt(n) {
+    if (n >= 1000) return Math.round(n).toLocaleString("en-US");
+    if (n >= 1) return n.toFixed(2);
+    return n.toPrecision(3);
+  }
+  function usd(n) { return "$" + (n >= 100 ? Math.round(n).toLocaleString("en-US") : n.toFixed(2)); }
+  function share(r, rod) { return Math.min(r.share * rod.mult / 100, MAX_SHARE) / 1e6; }
+
+  var status = document.getElementById("status");
+  var reveal = document.getElementById("reveal");
+  var castBtn = document.getElementById("castBtn");
+
+  function show(art, rarity, color, name, pay) {
+    document.getElementById("revealArt").innerHTML = art;
+    var rEl = document.getElementById("revealRarity");
+    rEl.textContent = rarity; rEl.style.color = color;
+    document.getElementById("revealName").textContent = name;
+    document.getElementById("revealPay").textContent = pay;
+    reveal.classList.remove("pop"); void reveal.offsetWidth; reveal.classList.add("pop");
+  }
+
+  function resolve() {
+    var rod = RODS[rodIdx];
+    var catchBps = streak >= 5 ? 10000 : rod.catchBps;
+    var multTxt = " · " + rod.name + " " + (rod.mult / 100) + "x";
+    if (rand(10000) >= catchBps) {
+      streak += 1;
+      var j = rand(5);
+      show(JUNK_ART[j], "Junk", "var(--r-junk)", JUNK[j], "No prize this time. +1 junk toward bait.");
+      tape.unshift("You <b style=\"color:var(--r-junk)\">" + JUNK[j] + "</b> +1 junk");
+    } else {
+      streak = 0;
+      var roll = rand(10000), acc = 0, ri = 0;
+      for (var i = 0; i < RARITIES.length; i++) { acc += RARITIES[i].weight; if (roll < acc) { ri = i; break; } }
+      var ra = RARITIES[ri];
+      var pool = SPECIES.filter(function (s) { return s.r === ri; });
+      var sp = pool[rand(pool.length)];
+      var s = share(ra, rod);
+      if (sp.t === "*") {
+        var total = 0;
+        Object.keys(POOLS).forEach(function (k) { total += POOLS[k] * s * PRICE[k]; });
+        show(GOLD_BULL, "Legendary", ra.color, sp.name, (s * 100).toFixed(1) + "% of every pool, about " + usd(total) + multTxt);
+        tape.unshift("You <b style=\"color:var(--r-legend)\">Golden Bull</b> jackpot " + usd(total));
+      } else {
+        var amt = POOLS[sp.t] * s;
+        var ticker = sp.t === "GAME" ? "" : sp.t;
+        var unit = sp.t === "GAME" ? "$GAME" : sp.t;
+        show(fishSVG(ra.color, ticker), ra.key, ra.color, sp.name, fmt(amt) + " " + unit + ", about " + usd(amt * PRICE[sp.t]) + multTxt);
+        tape.unshift("You <b style=\"color:" + ra.color + "\">" + sp.name + "</b> " + fmt(amt) + " " + unit);
+      }
+    }
+    if (tape.length > 14) tape.length = 14;
+    renderTape();
+    document.getElementById("pity").textContent = streak >= 5 ? "Next cast is guaranteed to catch" : "Junk streak " + streak + " / 5";
+  }
+
+  castBtn.addEventListener("click", function () {
+    if (busy) return;
+    busy = true; castBtn.disabled = true;
+    status.textContent = "Line out. Waiting for a bite…";
+    lake.cast();
+    var wait = reduceMotion ? 300 : 1200 + rand(1400);
+    setTimeout(function () {
+      status.textContent = "Bite! Reeling in…";
+      lake.bite();
+      setTimeout(function () {
+        resolve();
+        status.textContent = "On the real lake this rod now cools down. The preview skips it.";
+        busy = false; castBtn.disabled = false;
+      }, reduceMotion ? 100 : 700);
+    }, wait);
+  });
+
+  // ---------- the lake (canvas) ----------
+  var lake = (function () {
+    var cv = document.getElementById("lake");
+    var ctx = cv.getContext("2d");
+    var W = 0, H = 0, dpr = 1, t = 0, chart = [];
+    var bobState = "idle", stateAt = 0;
+
+    // A seeded random walk with an upward drift: the treeline doubles as a price chart.
+    function buildChart() {
+      var seed = 7, pts = [], y = 0;
+      function rnd() { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; }
+      for (var i = 0; i <= 90; i++) { y += (rnd() - 0.44) * 1.0; pts.push(y); }
+      var min = Math.min.apply(null, pts), max = Math.max.apply(null, pts);
+      chart = pts.map(function (v) { return (v - min) / (max - min || 1); });
+    }
+    function size() {
+      var r = cv.getBoundingClientRect();
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      W = Math.max(1, r.width); H = Math.max(1, r.height);
+      cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    function horizon() { return H * 0.56; }
+    function draw() {
+      var hz = horizon();
+      // sky
+      var sky = ctx.createLinearGradient(0, 0, 0, hz);
+      sky.addColorStop(0, "#0b1f2a"); sky.addColorStop(0.55, "#1d4052"); sky.addColorStop(0.86, "#7a5a4a"); sky.addColorStop(1, "#e9974d");
+      ctx.fillStyle = sky; ctx.fillRect(0, 0, W, hz);
+      // sun
+      var sx = W * 0.74, sy = hz - H * 0.02;
+      var glow = ctx.createRadialGradient(sx, sy, 0, sx, sy, H * 0.36);
+      glow.addColorStop(0, "rgba(242,181,68,0.55)"); glow.addColorStop(1, "rgba(242,181,68,0)");
+      ctx.fillStyle = glow; ctx.fillRect(0, 0, W, hz);
+      ctx.fillStyle = "#f6c25c"; ctx.beginPath(); ctx.arc(sx, sy, Math.min(W, H) * 0.07, Math.PI, 0); ctx.fill();
+      // treeline chart
+      var base = hz, top = hz - H * 0.2, n = chart.length;
+      ctx.beginPath(); ctx.moveTo(0, base);
+      for (var i = 0; i < n; i++) {
+        var x = i / (n - 1) * W, y = base - H * 0.04 - chart[i] * (base - top);
+        ctx.lineTo(x, y);
+      }
+      ctx.lineTo(W, base); ctx.closePath();
+      ctx.fillStyle = "#0a1a23"; ctx.fill();
+      ctx.beginPath();
+      for (var k = 0; k < n; k++) {
+        var x2 = k / (n - 1) * W, y2 = base - H * 0.04 - chart[k] * (base - top);
+        if (k === 0) ctx.moveTo(x2, y2); else ctx.lineTo(x2, y2);
+      }
+      ctx.strokeStyle = "rgba(242,181,68,0.7)"; ctx.lineWidth = 1.5; ctx.stroke();
+      var ex = W - 2, ey = base - H * 0.04 - chart[n - 1] * (base - top);
+      ctx.fillStyle = "#f2b544"; ctx.beginPath(); ctx.arc(ex - 4, ey, 3.5 + Math.sin(t * 3) * 0.8, 0, Math.PI * 2); ctx.fill();
+      // water
+      var wg = ctx.createLinearGradient(0, hz, 0, H);
+      wg.addColorStop(0, "#1a4a5c"); wg.addColorStop(0.35, "#12394a"); wg.addColorStop(1, "#0b1f2a");
+      ctx.fillStyle = wg; ctx.fillRect(0, hz, W, H - hz);
+      // sun reflection
+      for (var r = 0; r < 26; r++) {
+        var ry = hz + 4 + r * ((H - hz) / 30);
+        var wob = Math.sin(t * 1.6 + r * 0.9) * 10;
+        var rw = (W * 0.1) * (1 - r / 32) + Math.sin(t * 2 + r) * 6;
+        ctx.fillStyle = "rgba(242,181,68," + (0.34 - r * 0.011) + ")";
+        ctx.fillRect(sx - rw / 2 + wob, ry, rw, 2);
+      }
+      // ripple lines
+      ctx.strokeStyle = "rgba(232,241,239,0.06)"; ctx.lineWidth = 1;
+      for (var l = 0; l < 14; l++) {
+        var ly = hz + 10 + l * ((H - hz) / 14);
+        ctx.beginPath();
+        for (var x3 = 0; x3 <= W; x3 += 16) {
+          var yy = ly + Math.sin(x3 * 0.018 + t * 1.2 + l) * (1.5 + l * 0.2);
+          if (x3 === 0) ctx.moveTo(x3, yy); else ctx.lineTo(x3, yy);
+        }
+        ctx.stroke();
+      }
+      // bobber + line
+      var bx = W * (W < 920 ? 0.7 : 0.6), by = hz + (H - hz) * 0.42;
+      var since = t - stateAt, dip = 0;
+      if (bobState === "idle" || bobState === "wait") dip = Math.sin(t * 2.2) * 2.5;
+      if (bobState === "cast") { dip = Math.max(0, 14 - since * 40) * -1; if (since > 0.4) bobState = "wait"; }
+      if (bobState === "bite") dip = 9 + Math.sin(since * 24) * 4 * Math.max(0, 1 - since);
+      ctx.strokeStyle = "rgba(232,241,239,0.45)"; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(W + 10, -10);
+      ctx.quadraticCurveTo(W * 0.78, hz * 0.5, bx, by - 14 + dip); ctx.stroke();
+      if (bobState === "bite" || bobState === "cast") {
+        for (var s = 0; s < 3; s++) {
+          var rr = (since * 60 + s * 14) % 60;
+          ctx.strokeStyle = "rgba(232,241,239," + Math.max(0, 0.5 - rr / 120) + ")";
+          ctx.beginPath(); ctx.ellipse(bx, by + 6, rr * 1.4, rr * 0.35, 0, 0, Math.PI * 2); ctx.stroke();
+        }
+      } else {
+        ctx.strokeStyle = "rgba(232,241,239,0.18)";
+        ctx.beginPath(); ctx.ellipse(bx, by + 6, 18 + Math.sin(t * 2.2) * 2, 4, 0, 0, Math.PI * 2); ctx.stroke();
+      }
+      ctx.save(); ctx.translate(bx, by + dip);
+      ctx.fillStyle = "#e8f1ef"; ctx.beginPath(); ctx.arc(0, 0, 9, 0, Math.PI); ctx.fill();
+      ctx.fillStyle = "#e0513a"; ctx.beginPath(); ctx.arc(0, 0, 9, Math.PI, 0); ctx.fill();
+      ctx.fillStyle = "#081820"; ctx.fillRect(-9, -1, 18, 2);
+      ctx.strokeStyle = "#e8f1ef"; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(0, -9); ctx.lineTo(0, -15); ctx.stroke();
+      ctx.restore();
+    }
+    function loop(ts) { t = ts / 1000; draw(); requestAnimationFrame(loop); }
+    buildChart(); size(); draw();
+    window.addEventListener("resize", function () { size(); draw(); });
+    if (!reduceMotion) requestAnimationFrame(loop);
+    return {
+      cast: function () { bobState = "cast"; stateAt = t; if (reduceMotion) draw(); },
+      bite: function () { bobState = "bite"; stateAt = t; if (reduceMotion) draw(); setTimeout(function () { bobState = "idle"; if (reduceMotion) draw(); }, 1600); }
+    };
+  })();
+})();
+</script>

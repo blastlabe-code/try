@@ -289,6 +289,15 @@ whale/sybil/bait/pity/repair strategy comparisons, and sensitivity to token pric
 Vite + React + TypeScript + viem/wagmi, deployable as a **static site** (use `HashRouter` so it works on any
 static host). Chains: Robinhood Chain mainnet (4663), testnet (46630), local Hardhat (31337).
 
+### 10.0 Visual direction (binding)
+`docs/design/landing-preview.html` is the approved design for the whole site. Reuse its tokens exactly (dusk-lake
+palette `--lake-deep #0b1f2a`, `--lake #12394a`, `--foam #e8f1ef`, `--reed #8fb3aa`, `--lantern #f2b544` for primary
+actions, `--bobber #e0513a` used sparingly, rarity colours common `#a9c1b9` / uncommon `#5fc2a6` / rare `#62aee8` /
+epic `#b884f0` / legendary `#f2b544` / junk `#7d8f8a`), its type (Alfa Slab One display, Figtree body, IBM Plex Mono
+for numbers/labels), the canvas lake with the treeline drawn as a rising price chart, the red/white bobber, the
+catch tape, and its copy tone. The Landing route (`/`) should be a React port of that page, wired to live data when a
+deployment exists; the Play page grows the canvas lake into the full game view.
+
 ### 10.1 Pages (routes)
 | Route | Page | Content |
 |---|---|---|
