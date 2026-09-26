@@ -281,11 +281,102 @@ whale/sybil/bait/pity/repair strategy comparisons, and sensitivity to token pric
 
 ---------------------------------------------------------------------------------------------------
 
-## 10. Frontend (`app/`)
+## 10. Website & frontend (`app/`)
 
-Vite + React + TypeScript + viem/wagmi. Robinhood Chain / testnet / local Hardhat chains. Screens: Lake (animated
-cast → bite → reel reveal), Tackle Shop (3 rods), Tackle Box (my rods: durability, cooldown timers, repair),
-Claims (owed balances with USD estimates from Chainlink feeds), Pools & Economy (live pool sizes, splits,
-burns, recycle history), Leaderboard (season top-10 + countdown), Junkyard (collection + bait crafting).
-**Demo mode**: when no deployment is configured, the whole game runs in-browser against a JS port of the
-same rules (shared with the simulator) so it can be tried without a wallet.
+> This section supersedes any shorter screen list given in a task prompt. **All UI copy is English only**
+> (no i18n, no other languages anywhere in the UI, docs or code comments).
+
+Vite + React + TypeScript + viem/wagmi, deployable as a **static site** (use `HashRouter` so it works on any
+static host). Chains: Robinhood Chain mainnet (4663), testnet (46630), local Hardhat (31337).
+
+### 10.1 Pages (routes)
+| Route | Page | Content |
+|---|---|---|
+| `/` | **Landing** | Hero with the animated lake and the "Stock Angler" brand, one-line pitch ("Cast for real stock tokens on Robinhood Chain"), primary CTA **Play now** and secondary **Try the demo**; "How it works" in 3 steps (buy a rod → cast → reel in stocks); rod lineup cards; catch table (junk / fish / stock fish / Golden Bull with odds + what they pay); "Where your $GAME goes" split visual (30/35/15/10/10) and the "can't go insolvent" explainer; live stats strip when a deployment exists (total casts, pool value in USD, $GAME burned, current season prize); fairness (Chainlink VRF); FAQ; footer with legal notice (not affiliated with Robinhood; Stock Tokens restricted for US persons and other jurisdictions; games of chance may be regulated where you live). |
+| `/play` | **Play** | The Lake (canvas/SVG hero game view: cast animation with line + bobber, "waiting for a bite", bite splash, reel, reveal card with the catch: junk illustration or stock fish with ticker, amount, USD estimate, rarity colour, multiplier); rod picker with durability + cooldown; bait toggle; recent catches feed; quick claim summary. |
+| `/shop` | **Tackle Shop** | 3 rods: price, durability, catch %, multiplier, cooldown, value-per-$GAME, approve + buy with `maxPrice` slippage. |
+| `/tackle-box` | **Tackle Box** | My rods: durability bar, max durability after wear, repairs left, cooldown countdown, pending state (+ cancel stale cast), repair with cost preview. |
+| `/rewards` | **Rewards** | Owed balances per token with USD estimate, claim selected / claim all, claim history. |
+| `/leaderboard` | **Leaderboard** | Current season top-10 with scores, prize per rank, countdown to season end, season prize pool; previous seasons (finalize button when due, claim button for winners); my rank / my score. |
+| `/junkyard` | **Junkyard** | Junk collection of the 5 types (lifetime counts), spendable junk, craft bait (n), bait inventory, pity meter (misses in a row vs threshold). |
+| `/economy` | **Pools & Economy** | Live pool sizes per token (+ USD), revenue split, burned total, stock budget waiting to be recycled, recycle history, basket target weights vs actual, simulated RTP table from docs/ECONOMY.md, the insolvency-proof explainer. |
+| `/how-it-works` | **Rules & FAQ** | Full rules: tiers table, loot tables and odds, pity, bait, repair, cooldowns, VRF fairness, payout formula, tournament rules, fees, risks, terms. |
+| `/admin` | **Admin Console** | See §11. Linked in the footer (and in the nav only when the connected wallet holds an admin/config/keeper role or no deployment exists yet). |
+
+Global chrome: top nav (logo, Play, Shop, Tackle Box, Leaderboard, Economy, more), wallet connect button (injected
+wallets), network badge with "switch to Robinhood Chain", a clear **DEMO / LIVE** mode badge, $GAME balance, toast
+notifications for tx states, mobile bottom-nav on small screens.
+
+### 10.2 Demo mode
+When no deployment exists for the selected chain OR no wallet is connected, the whole game runs in-browser
+against the shared rules engine `sim/engine.mjs` (imported via a Vite alias; do not fork the rules), with
+viem's `keccak256` as the injected hash, `crypto.getRandomValues` words, a 1–3 s simulated VRF delay, demo
+balances, simulated pools/prices, bot anglers on the leaderboard, real-time cooldowns (with a "fast cooldowns"
+toggle), persisted in `localStorage` (wrapped in try/catch).
+
+### 10.3 Deployment addresses at runtime
+Addresses resolve in this order: (1) a deployment saved in this browser by the Admin Console (`localStorage`
+key `stockAngler.deployments.<chainId>`), (2) bundled `app/src/deployments/<chainId>.json`. Shape:
+`{ chainId, gameToken, rodNFT, fishingGame, prizeVault, revenueRouter, tournament, randomness, swapAdapter,
+stocks: {TICKER: address}, priceFeeds: {TICKER: address}, deployedAt, deployer }`.
+`scripts/export-abi.js` exports `{ abi, bytecode }` for every deployable contract (incl. mocks for local use)
+to `app/src/abi/<Contract>.json` so the Admin Console can deploy from the browser.
+
+---------------------------------------------------------------------------------------------------
+
+## 11. Admin Console (`/admin`)
+
+Lets the **dev wallet launch the whole game from the browser** and operate it afterwards.
+
+**11.1 Launch wizard** (shown when no deployment exists for the chain, or on "New deployment"):
+1. Network check: connected chain must be 4663 / 46630 / 31337; show chain name, deployer address and ETH balance.
+2. Inputs, each validated on-chain before continuing:
+   * `$GAME` token address (the token launched on pons.family): reads name/symbol/decimals/totalSupply, requires 18 decimals.
+     On 31337 offer "deploy a mock $GAME".
+   * Stock token address per ticker (AAPL, MSFT, AMZN, GOOGL, META, NVDA, TSLA): prefilled from `config/networks.json`
+     when present; must have code + ERC-20 metadata; optional Chainlink feed per ticker. On 31337 offer "deploy mock stocks".
+   * Treasury address, admin address (defaults to the connected wallet, strongly recommends a multisig), keeper addresses.
+   * Randomness: Chainlink VRF v2.5 (coordinator, keyHash, subscriptionId, callbackGasLimit, requestConfirmations,
+     nativePayment) or Mock (**only allowed on 31337**; hard-blocked elsewhere).
+   * Swap adapter: Uniswap V3 SwapRouter02 (prefilled mainnet `0xcaf681a66d020601342297493863e78c959e5cb2`) or Mock (31337 only).
+   * Game params: prefilled from `config/game-params.json`, editable in a form (tiers, species, split, loot, repair,
+     tournament) with live validation against the §7 bounds.
+3. Review screen: every contract to deploy and every config tx, estimated gas.
+4. Execute: runs the **same ordered deploy plan as `scripts/deploy.js`** (see §12) step by step with the connected wallet,
+   showing each tx hash with an explorer link. Progress (deployed addresses + completed step index) is saved in
+   `localStorage` so a refresh or rejected tx can **resume** instead of redeploying.
+5. Done: saves the deployment into this browser (§10.3) so the site switches to LIVE mode immediately, offers the
+   deployment JSON for download (to commit as `app/src/deployments/<chainId>.json`), and shows the post-launch checklist
+   (add the VRF provider as a consumer on the subscription and fund it, seed the prize pools, run the keeper, move admin to the multisig/timelock).
+
+**11.2 Operate** (when a deployment exists; each action enabled only if the wallet holds the needed role):
+* Status: paused flags, pool balances per token (+ USD), router stock budget and WETH balance, split, tier table,
+  species table, current season, pending/stale casts count, role holders for the connected wallet.
+* Pause / unpause (PAUSER_ROLE).
+* Edit tiers (price with the ±25%/24 h rule shown and pre-checked), species (enable/disable/edit), loot, repair, split (CONFIG_ROLE).
+* Fund pools: approve + `PrizeVault.fund(token, amount)`; `sync(token)`.
+* Recycle (KEEPER_ROLE): pick tokenIn ($GAME budget or WETH), target stock (suggests the most under-weight), amount,
+  quote via QuoterV2 when available, slippage bps → `minAmountOut`, send.
+* Tournament: finalize ended seasons.
+* Emergency withdraw (available funds only): schedule / execute after the 7-day delay (countdown) / cancel.
+* Roles: grant / revoke KEEPER, CONFIG, PAUSER; transfer admin; renounce deployer roles.
+* Randomness provider settings (VRF config) and claim gate address.
+
+---------------------------------------------------------------------------------------------------
+
+## 12. Deploy plan (single source of wiring)
+
+The deploy sequence lives in ONE pure module, `shared/deploy-plan.mjs` (no ethers/viem imports, no I/O):
+`buildDeployPlan({ network, chainId, addresses, params, options }) → Step[]` where a step is either
+`{ id, kind: 'deploy', contract, args: [...], saveAs }` or `{ id, kind: 'call', target: '<saveAs ref or address>',
+contract, method, args: [...], description }`. Args may reference earlier results as `{ ref: 'saveAs' }`. It encodes
+the full order: deploy RodNFT, PrizeVault, Tournament, RevenueRouter, swap adapter, randomness provider, FishingGame →
+grant GAME_ROLE / KEEPER_ROLE / CONFIG_ROLE / PAUSER_ROLE → register tokens → configure tiers, species, rarity
+weights, loot, repair, split, basket weights, tournament → point the randomness provider at the game → optional
+admin hand-over. `scripts/deploy.js` (ethers) and the Admin Console (viem) are thin executors of this plan, so the
+browser and CLI launches are guaranteed identical. The plan builder refuses mocks on chainIds 4663 / 46630.
+
+**Ownership:** `shared/deploy-plan.mjs` is written by the deploy/keeper-scripts agent. The frontend imports it through
+a Vite alias (`@shared/deploy-plan.mjs`) and must not write its own copy; if it does not exist yet when the frontend is
+built, code the Admin Console executor against the `Step` shape above and import the module once it appears.
+
