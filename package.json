@@ -1,0 +1,18 @@
+{
+  "name": "robinhood-fishing",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Stock Angler — an on-chain fishing game on Robinhood Chain with rod NFTs, VRF catches and a self-balancing stock-token prize economy.",
+  "license": "MIT",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "sim": "node sim/simulate.mjs"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^6.1.2",
+    "@openzeppelin/contracts": "^5.6.1",
+    "hardhat": "^2.29.1",
+    "solc": "^0.8.28"
+  }
+}
