@@ -303,7 +303,8 @@ export function paramsToConfig(params) {
 }
 
 /**
- * Checks parameters against the on-chain bounds (SPEC §4, §7) plus internal consistency.
+ * Checks parameters against the on-chain bounds (SPEC §4, §7) plus structural consistency (array lengths,
+ * integer ranges that must fit their Solidity types, registered reward symbols).
  * @param {Params} params
  * @returns {string[]} human-readable problems; empty when the parameters are valid
  */
@@ -330,9 +331,6 @@ export function validateParams(params) {
     if (s.jackpot !== (s.rewardSymbol === JACKPOT_SYMBOL)) problems.push(`species ${i}: jackpot species must use reward symbol "${JACKPOT_SYMBOL}"`);
     if (!s.jackpot && !params.rewardTokens.includes(s.rewardSymbol)) problems.push(`species ${i}: reward symbol ${s.rewardSymbol} not registered`);
   });
-  if (!params.species.some((s) => s.enabled && s.rarity === Rarity.Common && s.weight > 0)) {
-    problems.push('at least one enabled Common species is required (downgrades end at Common)');
-  }
 
   const rw = params.rarityWeights;
   if (rw.length !== RARITY_NAMES.length || !rw.every((w) => inRange(w, 0, BPS)) || sum(rw) !== BPS) {
@@ -354,8 +352,8 @@ export function validateParams(params) {
   if (s.treasuryBps > b.split.maxTreasuryBps) problems.push('split: treasury above 2000');
 
   const r = params.repair;
-  if (!inRange(r.repairCostBps, 0, BPS)) problems.push('repairCostBps out of range');
-  if (!inRange(r.repairWearBps, 0, BPS) || r.repairWearBps * r.maxRepairs >= BPS) problems.push('repair wear would exhaust the rod');
+  if (!inRange(r.repairCostBps, 0, BPS)) problems.push('repairCostBps must be 0..10000');
+  if (!inRange(r.repairWearBps, 0, BPS)) problems.push('repairWearBps must be 0..10000');
   if (!inRange(r.maxRepairs, 0, 255)) problems.push('maxRepairs must fit uint8');
 
   const t = params.tournament;
@@ -581,9 +579,12 @@ export function resolveCast(state, params, rod, rolls, useBait) {
   const catchBps = effectiveCatchBps(params, rod.tier, useBait, player.missStreak);
   const roll1 = Number(rolls.r1 % BPS_N);
 
-  const picked = roll1 < catchBps
-    ? pickSpecies(params.species, rarityFromRoll(Number(rolls.r2 % BPS_N), params.rarityWeights), rolls.r3)
-    : null;
+  let rolledRarity = null;
+  let picked = null;
+  if (roll1 < catchBps) {
+    rolledRarity = rarityFromRoll(Number(rolls.r2 % BPS_N), params.rarityWeights);
+    picked = pickSpecies(params.species, rolledRarity, rolls.r3);
+  }
 
   if (picked === null) {
     // Junk: the roll missed, or (degenerate config only) no enabled species exists at or below the rolled rarity.
@@ -599,7 +600,6 @@ export function resolveCast(state, params, rod, rolls, useBait) {
     };
   }
 
-  const rolledRarity = rarityFromRoll(Number(rolls.r2 % BPS_N), params.rarityWeights);
   const species = params.species[picked.speciesId];
   const share = effectiveSharePpm(species.sharePpm, tier.multiplierX100, params.loot.maxSharePpm);
   const symbols = species.jackpot ? params.rewardTokens : [species.rewardSymbol];
